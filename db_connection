@@ -1,0 +1,94 @@
+import sqlite3
+
+
+def init():
+    connection = sqlite3.connect("database.db")
+    sqlite_create_table_query = '''
+    CREATE TABLE IF NOT EXISTS menu (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        pizza TEXT NOT NULL UNIQUE,
+        ingredients TEXT NOT NULL,
+        price REAL NOT NULL
+    )'''
+    cursor = connection.cursor()
+    cursor.execute(sqlite_create_table_query)
+    connection.commit()
+    connection.close()
+
+
+def add_menu_to_db():
+    connection = sqlite3.connect("database.db")
+    cursor = connection.cursor()
+
+    menu = [
+        {
+            "pizza": "Пепперони",
+            "ingredients": "Протёртые томаты, моцарелла, салями, пикантные пепперони. Аллергены: злаки, лактоза.",
+            "price": 305
+        },
+        {
+            "pizza": "Сырная",
+            "ingredients": "Моцарелла бейби, фета, пармезан, горгонзола, проволоне, моцарелла. Аллергены: глютен, лактоза.",
+            "price": 280
+        },
+        {
+            "pizza": "Маргарита",
+            "ingredients": "Протёртые томаты, моцарелла, базилик. Аллергены: злаки, лактоза.",
+            "price": 190
+        },
+        {
+            "pizza": "Гавайская",
+            "ingredients": "Курица, ананас, моцарелла, томатный соус. Аллергены: злаки, лактоза.",
+            "price": 250
+        },
+        {
+            "pizza": "Вегетарианская",
+            "ingredients": "Цукини, баклажан, томаты черри, перец болгарский, моцарелла, томатный соус. Аллергены: злаки, лактоза.",
+            "price": 220
+        }
+    ]
+
+    for item in menu:
+        try:
+            cursor.execute(
+                "INSERT INTO menu (pizza, ingredients, price) VALUES (?, ?, ?)",
+                (item["pizza"], item["ingredients"], item["price"])
+            )
+        except sqlite3.IntegrityError as e:
+            print(f"Ошибка при добавлении: {item['pizza']} - {e}")
+
+    connection.commit()
+    connection.close()
+
+# Все
+def get_all_menu_items():
+    conn = sqlite3.connect("database.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM menu")
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+# По айди
+def get_menu_item_by_id(pizza_id):
+    conn = sqlite3.connect("database.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM menu WHERE id = ?", (pizza_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+# Удаляем
+def delete_menu_item(pizza_id):
+    conn = sqlite3.connect("database.db")
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM menu WHERE id = ?", (pizza_id,))
+    conn.commit()
+    conn.close()
+    return f"Пицца с ID {pizza_id} удалена."
+
+if __name__ == "__main__":
+    init()
+    add_menu_to_db()
